@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS EXPRESS 跨境電商與物流智能平台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+        .animated-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative selection:bg-brand-500 selection:text-white">
+
+    <!-- Custom Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================= LOGIN SCREEN OVERLAY ================= -->
+    <div id="login-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 animated-fade-in">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 text-white font-black text-2xl shadow-lg shadow-brand-500/30">
+                    N
+                </div>
+                <h1 class="text-2xl font-black tracking-tight text-slate-900">NEXUS <span class="text-brand-600">EXPRESS</span></h1>
+                <p class="text-xs text-slate-500 font-medium">跨境電商與物流智能平台 • 多角色全流程權限系統</p>
+            </div>
+
+            <!-- Role Selector Tabs in Login -->
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-slate-600 tracking-wider uppercase text-center">選擇測試身分 (Role Selector)</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-2xl text-xs font-semibold">
+                    <button type="button" onclick="selectLoginRoleTab('buyer')" id="login-tab-buyer" class="py-2.5 rounded-xl bg-white text-brand-600 shadow-sm transition">🛍️ 買家</button>
+                    <button type="button" onclick="selectLoginRoleTab('shop')" id="login-tab-shop" class="py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition">🏪 賣家店鋪</button>
+                    <button type="button" onclick="selectLoginRoleTab('deliverer')" id="login-tab-deliverer" class="py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition">🚚 派送員</button>
+                    <button type="button" onclick="selectLoginRoleTab('admin')" id="login-tab-admin" class="py-2.5 rounded-xl text-amber-600 hover:text-amber-700 transition">🛡️ 管理員</button>
+                </div>
+            </div>
+
+            <!-- Quick Account Selector Buttons according to active Role Tab -->
+            <div id="login-presets-container" class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <!-- Dynamic standard quick preset options rendered by JS -->
+            </div>
+
+            <!-- Standard Credentials Form -->
+            <form onsubmit="handleManualLogin(event)" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">用戶帳號 / ID</label>
+                        <input type="text" id="login-input-username" required placeholder="例如: u00001" class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">登入密碼</label>
+                        <input type="password" id="login-input-password" required value="123456" class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/25 transition">
+                    🔑 驗證並登入系統 (Login)
+                </button>
+            </form>
+            <div class="text-center">
+                <p class="text-[11px] text-slate-400">💡 提示: 點擊上方預設帳號按鈕即可一鍵以特定權限角色快速登入系統</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('store')">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-brand-500/20">
+                    N
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg text-slate-900 tracking-tight">NEXUS <span class="text-brand-600">EXPRESS</span></span>
+                    <span class="hidden sm:inline-block text-[11px] bg-brand-50 text-brand-600 border border-brand-200 px-2 py-0.5 rounded-full ml-2 font-semibold">跨境物流系統 v2.5</span>
+                </div>
+            </div>
+
+            <!-- Role-Based Nav Tabs -->
+            <nav id="main-nav" class="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600">
+                <!-- Dynamically generated according to logged-in user permissions -->
+            </nav>
+
+            <!-- Right Controls: Cart & Account Identity -->
+            <div class="flex items-center gap-3">
+                <!-- Cart Button (Visible for Buyers / Store Viewers) -->
+                <button id="header-cart-btn" onclick="toggleCartDrawer()" class="relative p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                    <span id="cart-badge-count" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow">0</span>
+                </button>
+
+                <!-- Active User Account Dropdown -->
+                <div class="relative group">
+                    <div class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-xl cursor-pointer transition border border-slate-200/60">
+                        <div class="w-7 h-7 rounded-lg bg-slate-800 text-white font-bold text-xs flex items-center justify-center shadow-sm" id="user-avatar-tag">
+                            U
+                        </div>
+                        <div class="text-left text-xs hidden lg:block">
+                            <div class="font-bold text-slate-900" id="user-display-name">未登入</div>
+                            <div class="text-slate-500 text-[10px]" id="user-tier-tag">請點擊登入</div>
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div class="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 hidden group-hover:block z-50 animated-fade-in">
+                        <div class="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase">當前登入身分</div>
+                        <div class="px-3 py-1.5 border-b border-slate-100">
+                            <p class="text-xs font-bold text-slate-800" id="menu-user-fullname">尚未登入</p>
+                            <p class="text-[11px] text-slate-500" id="menu-user-role-desc">-</p>
+                        </div>
+                        <div class="px-3 py-1 text-[10px] font-bold text-slate-400 tracking-wider uppercase mt-1">快速切換身分 (Role Switch)</div>
+                        <button onclick="quickSwitchUser('u00001')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 flex items-center justify-between">
+                            <span>吳卓曦 <span class="text-slate-400">(買家)</span></span>
+                            <span class="text-amber-500 font-bold text-[10px] bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Gold</span>
+                        </button>
+                        <button onclick="quickSwitchUser('u00002')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 flex items-center justify-between">
+                            <span>陳大文 <span class="text-slate-400">(買家)</span></span>
+                            <span class="text-slate-500 font-bold text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">Silver</span>
+                        </button>
+                        <button onclick="quickSwitchUser('s00001')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-indigo-50 text-indigo-600 font-semibold">
+                            🏪 霸道總裁之店 (賣家)
+                        </button>
+                        <button onclick="quickSwitchUser('d00001')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 text-blue-600 font-semibold">
+                            🚚 張派送 (派送員)
+                        </button>
+                        <button onclick="quickSwitchUser('admin')" class="w-full text-left px-3 py-1.5 text-xs hover:bg-amber-50 text-amber-600 font-semibold">
+                            🛡️ 系統最高管理員 (Admin)
+                        </button>
+                        <hr class="my-1 border-slate-100">
+                        <button onclick="openLoginModal()" class="w-full text-left px-3 py-2 text-xs hover:bg-red-50 text-red-600 font-bold flex items-center gap-1.5">
+                            <span>🚪 切換帳號 / 登出 (Logout)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation bar -->
+        <div id="mobile-nav" class="md:hidden flex overflow-x-auto border-t border-slate-100 px-2 py-1.5 gap-1 text-xs custom-scrollbar">
+            <!-- Rendered dynamically -->
+        </div>
+    </header>
+
+    <!-- MAIN BODY CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= VIEW 1: E-COMMERCE STORE ================= -->
+        <section id="view-store" class="space-y-6 animated-fade-in">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-brand-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
+                <div class="relative z-10 max-w-2xl space-y-2">
+                    <span class="bg-brand-500/30 text-brand-200 border border-brand-400/30 text-xs px-3 py-1 rounded-full font-medium inline-block">跨境正品直郵 • 一站式集運包郵</span>
+                    <h1 class="text-2xl sm:text-4xl font-black tracking-tight">尋找優質好物，智能跨境直達</h1>
+                    <p class="text-slate-300 text-xs sm:text-sm">支持全港自提點提貨及上門派送，尊享金/銀卡會員專屬運費與商品折扣優惠。</p>
+                </div>
+                <div class="absolute -right-6 -bottom-10 opacity-10 text-[180px] pointer-events-none select-none">🛍️</div>
+            </div>
+
+            <!-- Product Category Filter & Search -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 custom-scrollbar">
+                    <button onclick="filterProducts('all')" class="cat-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-sm transition">全部商品</button>
+                    <button onclick="filterProducts('圖書文娛')" class="cat-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">📚 圖書文娛</button>
+                    <button onclick="filterProducts('數碼電子')" class="cat-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">📱 數碼電子</button>
+                    <button onclick="filterProducts('流行服飾')" class="cat-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">👗 流行服飾</button>
+                    <button onclick="filterProducts('居家百貨')" class="cat-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">🪑 居家百貨</button>
+                </div>
+                <div class="w-full sm:w-64">
+                    <input type="text" id="store-search" oninput="searchProducts()" placeholder="搜尋商品名稱或店鋪..." class="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                </div>
+            </div>
+
+            <!-- Product Grid Container -->
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Product items rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ================= VIEW 2: MY PURCHASES & LOGISTICS TRACKING ================= -->
+        <section id="view-orders" class="space-y-6 hidden animated-fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900">我的購買紀錄與包裹物流追蹤</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">實時檢視已購買商品、發貨狀態及全流程跨境軌跡</p>
+                </div>
+                <div class="text-xs bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl font-bold text-slate-600" id="my-orders-count-badge">
+                    共 0 筆訂單
+                </div>
+            </div>
+
+            <!-- Orders Container -->
+            <div id="orders-list-container" class="space-y-4">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ================= VIEW 3: SHOP ANALYTICS & PRODUCT MANAGEMENT ================= -->
+        <section id="view-shop-analytics" class="space-y-6 hidden animated-fade-in">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                        <span>📊 店鋪數據分析與商品管理</span>
+                        <span id="active-shop-title" class="text-xs font-bold bg-brand-50 text-brand-600 border border-brand-200 px-3 py-0.5 rounded-full">霸道總裁之店</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">賣家專屬營運儀表板，即時監控銷售金額、庫存狀態及新品上架。</p>
+                </div>
+                <button onclick="openAddProductModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 active:scale-95 transition">
+                    <span>➕ 發佈新商品 (Publish Product)</span>
+                </button>
+            </div>
+
+            <!-- Analytics Key Metrics Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-xs font-semibold text-slate-500">總累計銷售額 (Revenue)</div>
+                    <div class="text-xl sm:text-2xl font-black text-slate-900 mt-1" id="shop-stat-revenue">HK$ 0.00</div>
+                    <div class="text-[11px] text-emerald-600 mt-1 font-semibold">↑ 12.5% 本月增幅</div>
+                </div>
+                <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-xs font-semibold text-slate-500">成單包裹總數 (Orders)</div>
+                    <div class="text-xl sm:text-2xl font-black text-slate-900 mt-1" id="shop-stat-orders">0 筆</div>
+                    <div class="text-[11px] text-slate-400 mt-1">正常履約派送中</div>
+                </div>
+                <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-xs font-semibold text-slate-500">店鋪評分 (Rating)</div>
+                    <div class="text-xl sm:text-2xl font-black text-amber-500 mt-1" id="shop-stat-rating">4.85 ★</div>
+                    <div class="text-[11px] text-slate-400 mt-1">極佳顧客滿意度</div>
+                </div>
+                <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="text-xs font-semibold text-slate-500">線上商品款數 (Items)</div>
+                    <div class="text-xl sm:text-2xl font-black text-indigo-600 mt-1" id="shop-stat-items">0 款</div>
+                    <div class="text-[11px] text-slate-400 mt-1">嚴格無負數價格庫存</div>
+                </div>
+            </div>
+
+            <!-- Shop Inventory & Product Management Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-slate-900">店鋪在售商品清單與庫存調整</h3>
+                    <span class="text-xs text-slate-400 font-medium">已啟用防負數庫存/價格安全機制</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                                <th class="p-3.5 pl-5">商品名稱</th>
+                                <th class="p-3.5">單價 (HKD)</th>
+                                <th class="p-3.5">剩餘庫存 (Stock)</th>
+                                <th class="p-3.5">包裝體積 (m³)</th>
+                                <th class="p-3.5 text-right pr-5">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shop-products-tbody" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 4: DELIVERER WORKBENCH ================= -->
+        <section id="view-deliverer" class="space-y-6 hidden animated-fade-in">
+            <!-- Header & Hub Switcher -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-3xl shadow-lg">
+                <div class="space-y-1">
+                    <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-semibold">派送員專屬營運端</span>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight">跨境路線派送與樞紐轉運工作台</h2>
+                    <p class="text-xs text-slate-400">即時更新包裹狀態、切換所屬集運樞紐及調配派送路線</p>
+                </div>
+                <!-- Hub Selector -->
+                <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700/80 w-full sm:w-auto">
+                    <label class="block text-[11px] text-slate-400 font-semibold mb-1">切換所屬集運樞紐 (Current Hub):</label>
+                    <select id="deliverer-hub-select" onchange="switchDelivererHub(this.value)" class="bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 w-full sm:w-64">
+                        <option value="pt_hub_01">深圳寶安總倉 (a00021)</option>
+                        <option value="pt_hub_02">九龍灣分區大倉 (a00022)</option>
+                        <option value="pt_hub_03">東莞轉運樞紐 (a00023)</option>
+                        <option value="pt_hub_04">葵涌物流樞紐 (a00024)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Deliverer Real-Time KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500">待處理訂單包 (Pending Tasks)</div>
+                        <div class="text-2xl font-black text-amber-500 mt-1" id="deliverer-kpi-pending">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">包含待轉運及待派送</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-xl">⏳</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500">今日累計派送 (Today Completed)</div>
+                        <div class="text-2xl font-black text-emerald-600 mt-1" id="deliverer-kpi-completed">0</div>
+                        <div class="text-[11px] text-emerald-600 mt-0.5">↑ 實時完成更新</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl">✅</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500">當前樞紐網絡負載 (Hub Load)</div>
+                        <div class="text-2xl font-black text-indigo-600 mt-1" id="deliverer-kpi-hub-load">0.0%</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5" id="deliverer-kpi-hub-name">深圳寶安總倉</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xl">🏭</div>
+                </div>
+            </div>
+
+            <!-- Package Route Dispatch Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">當前樞紐派送與包裹流動清單</h3>
+                        <p class="text-xs text-slate-400">更改狀態將即時同步連動「買家追蹤」與「數據庫」狀態</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                                <th class="p-3.5 pl-5">包裹號 / 訂單號</th>
+                                <th class="p-3.5">商品名稱</th>
+                                <th class="p-3.5">始發樞紐 ➔ 目的地</th>
+                                <th class="p-3.5">更新時間</th>
+                                <th class="p-3.5">當前物流狀態</th>
+                                <th class="p-3.5 text-right pr-5">更新進度操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deliverer-tasks-tbody" class="divide-y divide-slate-100">
+                            <!-- Dynamic deliverables -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 5: ADMIN COMMAND & CONTROL CENTER ================= -->
+        <section id="view-admin" class="space-y-6 hidden animated-fade-in">
+            <!-- Admin Top Banner -->
+            <div class="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-bold inline-block">最高控制權限 (System Master Admin)</span>
+                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight">跨境物流與資金流最高管理控制台</h2>
+                    <p class="text-xs text-amber-100">管理平台會員等級、監控每日資金流水金額、執行集運樞紐排空 (Discharge) 操作。</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md px-5 py-3.5 rounded-2xl border border-white/20 text-right w-full md:w-auto">
+                    <div class="text-[11px] text-amber-100 font-medium">平台累計總交易額 (GMV)</div>
+                    <div class="text-2xl sm:text-3xl font-black" id="admin-total-gmv">HK$ 0.00</div>
+                </div>
+            </div>
+
+            <!-- Admin Grid: Money Flow & Member Adjustments -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Left Column: User Member Tier Management & Money Flow -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- User Tier Management Box -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">👤 會員等級調整與權限管理 (Adjust Member Tier)</h3>
+                                <p class="text-xs text-slate-500">可自由調整買家會員級別：金卡 (Gold 9折)、銀卡 (Silver 95折)、普通 (Normal 原價)</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                                        <th class="p-3">用戶 ID / 姓名</th>
+                                        <th class="p-3">電郵與電話</th>
+                                        <th class="p-3">當前等級</th>
+                                        <th class="p-3 text-right">調整會員等級</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-user-tier-tbody" class="divide-y divide-slate-100">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Daily Money Flow Transaction Logs -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">💰 每日平台資金流水與抽成記錄 (Daily Money Flow)</h3>
+                                <p class="text-xs text-slate-500">實時結算每筆訂單之貨款金額、平台佣金 (5%) 及支付渠道</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                                        <th class="p-3">交易單號</th>
+                                        <th class="p-3">下單買家</th>
+                                        <th class="p-3">支付管道</th>
+                                        <th class="p-3">總交易金額</th>
+                                        <th class="p-3">平台估算收益 (5%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-moneyflow-tbody" class="divide-y divide-slate-100">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Hub Capacity & Discharge Controller -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm flex items-center justify-between">
+                                <span>🚨 樞紐容量與排空 (Discharge)</span>
+                                <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">即時強制作業</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">當集運樞紐負荷過高時，可執行強制 Discharge 批量清空積壓包裹。</p>
+                        </div>
+
+                        <!-- Hubs Discharge Progress Items -->
+                        <div id="admin-hub-discharge-list" class="space-y-4">
+                            <!-- Dynamic progress bars & buttons -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL 1: ADD TO CART / BUY NOW SELECTION ================= -->
+    <div id="modal-cart-select" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animated-fade-in">
+            <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-3">
+                    <div id="cart-modal-emoji" class="text-3xl p-2 bg-slate-100 rounded-2xl">📦</div>
+                    <div>
+                        <h3 id="cart-modal-title" class="font-bold text-slate-900 text-base">商品名稱</h3>
+                        <p id="cart-modal-price" class="text-xs font-black text-brand-600">HK$ 0.00</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-cart-select')" class="text-slate-400 hover:text-slate-600 text-lg font-bold p-1">✕</button>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-slate-700">1. 請選擇提貨自提點或配送地址：</label>
+
+                <!-- Delivery Mode Tabs -->
+                <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                    <button type="button" onclick="setCartDeliveryMode('pickup')" id="btn-mode-pickup" class="py-2 rounded-lg bg-white shadow-sm text-brand-600 font-bold transition">🏪 網點自提 (更優惠)</button>
+                    <button type="button" onclick="setCartDeliveryMode('address')" id="btn-mode-address" class="py-2 rounded-lg text-slate-600 transition">🏠 上門配送地址</button>
+                </div>
+
+                <!-- Dropdown for Pickup Point -->
+                <div id="container-pickup-select" class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-500">選擇指定自提點 (Pickup Point):</label>
+                    <select id="cart-select-pickup" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 font-semibold">
+                        <!-- Dynamic pickup points -->
+                    </select>
+                </div>
+
+                <!-- Dropdown for Doorstep Address -->
+                <div id="container-address-select" class="space-y-1 hidden">
+                    <label class="text-[11px] font-semibold text-slate-500">選擇配送地址 (Doorstep Address):</label>
+                    <select id="cart-select-address" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 font-semibold">
+                        <!-- Dynamic address list -->
+                    </select>
+                </div>
+
+                <!-- Quantity adjustment -->
+                <div class="flex items-center justify-between pt-2">
+                    <label class="text-xs font-bold text-slate-700">2. 選擇購買數量：</label>
+                    <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                        <button onclick="adjustCartQty(-1)" class="px-3 py-1 hover:bg-slate-200 text-slate-600 font-bold text-sm">-</button>
+                        <span id="cart-modal-qty" class="px-3 py-1 text-xs font-bold text-slate-900">1</span>
+                        <button onclick="adjustCartQty(1)" class="px-3 py-1 hover:bg-slate-200 text-slate-600 font-bold text-sm">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Choice Buttons -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="confirmAddToCart(false)" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition">
+                    🛒 加入購物車
+                </button>
+                <button onclick="confirmAddToCart(true)" class="w-full py-2.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 transition">
+                    ⚡ 立即前往結算
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: SHOPPING CART DRAWER ================= -->
+    <div id="modal-cart-drawer" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between p-6 animated-fade-in">
+            <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🛒</span>
+                        <h3 class="font-black text-slate-900 text-base">我的購物車</h3>
+                    </div>
+                    <button onclick="toggleCartDrawer()" class="text-slate-400 hover:text-slate-600 text-lg font-bold p-1">✕</button>
+                </div>
+
+                <div id="cart-drawer-items" class="space-y-3">
+                    <!-- Dynamic cart items list -->
+                </div>
+            </div>
+
+            <!-- Checkout Summary Box -->
+            <div class="border-t border-slate-100 pt-4 space-y-3">
+                <div class="space-y-1.5 text-xs text-slate-600">
+                    <div class="flex justify-between">
+                        <span>原價小計 (Subtotal):</span>
+                        <span id="cart-summary-subtotal" class="font-bold">HK$ 0.00</span>
+                    </div>
+                    <div class="flex justify-between text-amber-600">
+                        <span id="cart-summary-discount-label">會員折扣 (Gold 10% Off):</span>
+                        <span id="cart-summary-discount-amount" class="font-bold">-HK$ 0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>預估跨境運費 (Freight):</span>
+                        <span id="cart-summary-shipping" class="font-bold">HK$ 0.00</span>
+                    </div>
+                    <div class="flex justify-between text-base font-black text-slate-900 border-t border-slate-100 pt-2">
+                        <span>應付總額 (Total):</span>
+                        <span id="cart-summary-final" class="text-brand-600">HK$ 0.00</span>
+                    </div>
+                </div>
+
+                <button onclick="executeCartCheckout()" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/25 active:scale-95 transition">
+                    💳 立即一鍵結算付款 (Confirm Checkout)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: ADD NEW PRODUCT (FOR SHOP SELLER) ================= -->
+    <div id="modal-add-product" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animated-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-base">➕ 發佈新商品至跨境商城</h3>
+                <button onclick="closeModal('modal-add-product')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+            </div>
+
+            <form onsubmit="handleCreateProduct(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">商品名稱</label>
+                    <input type="text" id="new-prod-name" required placeholder="例如: 高效藍牙降噪耳機" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">商品分類</label>
+                        <select id="new-prod-category" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 font-semibold">
+                            <option value="數碼電子">📱 數碼電子</option>
+                            <option value="圖書文娛">📚 圖書文娛</option>
+                            <option value="流行服飾">👗 流行服飾</option>
+                            <option value="居家百貨">🪑 居家百貨</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">商品圖標 Emoji</label>
+                        <select id="new-prod-emoji" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="🎧">🎧 耳機</option>
+                            <option value="⌚">⌚ 智能手錶</option>
+                            <option value="🎮">🎮 遊戲機</option>
+                            <option value="📖">📖 經典書籍</option>
+                            <option value="🧥">🧥 時尚外套</option>
+                            <option value="☕">☕ 保溫水壺</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">單價 (HKD)</label>
+                        <input type="number" step="0.01" min="0.01" id="new-prod-price" required placeholder="299.00" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">初始庫存</label>
+                        <input type="number" min="0" id="new-prod-stock" required placeholder="50" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">包裝體積 (m³)</label>
+                        <input type="number" step="0.001" min="0.001" id="new-prod-volume" required placeholder="0.005" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="pt-3">
+                    <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20 transition">
+                        🚀 確認上架發佈商品
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ================= GLOBAL APPLICATION STATE =================
+        
+        // 1. Users Database with Roles
+        const stateUsers = {
+            'u00001': { id: 'u00001', name: '吳卓曦', role: 'buyer', tier: 'gold', email: 'cheukhei@nexus.com', phone: '+852 9123 4567' },
+            'u00002': { id: 'u00002', name: '陳大文', role: 'buyer', tier: 'silver', email: 'taiman@nexus.com', phone: '+852 9234 5678' },
+            'u00003': { id: 'u00003', name: '李嘉欣', role: 'buyer', tier: 'normal', email: 'kahyan@nexus.com', phone: '+852 9345 6789' },
+            's00001': { id: 's00001', name: '霸道總裁之店 (張總)', role: 'shop', shopId: 'shop_01', shopTitle: '霸道總裁之店', rating: 4.85, email: 'boss@nexus.com' },
+            's00002': { id: 's00002', name: '數碼旗艦店 (王經理)', role: 'shop', shopId: 'shop_02', shopTitle: '數碼旗艦店', rating: 4.92, email: 'digital@nexus.com' },
+            'd00001': { id: 'd00001', name: '張派送 (高級速遞員)', role: 'deliverer', hubId: 'pt_hub_01', email: 'courier@nexus.com' },
+            'admin':  { id: 'admin',  name: '系統最高管理員', role: 'admin', email: 'admin@nexus.com' }
+        };
+
+        let currentUser = stateUsers['u00001']; // Default active user
+        let currentActiveRoleTabInLogin = 'buyer';
+
+        // 2. Logistics Hubs
+        const stateHubs = {
+            'pt_hub_01': { id: 'pt_hub_01', code: 'a00021', name: '深圳寶安總倉', capacity: 500, currentCount: 320 },
+            'pt_hub_02': { id: 'pt_hub_02', code: 'a00022', name: '九龍灣分區大倉', capacity: 300, currentCount: 145 },
+            'pt_hub_03': { id: 'pt_hub_03', code: 'a00023', name: '東莞轉運樞紐', capacity: 400, currentCount: 280 },
+            'pt_hub_04': { id: 'pt_hub_04', code: 'a00024', name: '葵涌物流樞紐', capacity: 450, currentCount: 190 }
+        };
+
+        // 3. Products
+        let stateProducts = [
+            { id: 'p101', name: '輕薄藍牙無線機械鍵盤', category: '數碼電子', price: 349.00, stock: 45, volume: 0.008, shopId: 'shop_01', shopName: '霸道總裁之店', emoji: '⌨️' },
+            { id: 'p102', name: '港式奶茶專用經典茶葉禮盒', category: '居家百貨', price: 128.00, stock: 120, volume: 0.003, shopId: 'shop_01', shopName: '霸道總裁之店', emoji: '☕' },
+            { id: 'p103', name: '現代跨境物流學與供應鏈管理', category: '圖書文娛', price: 89.00, stock: 60, volume: 0.002, shopId: 'shop_01', shopName: '霸道總裁之店', emoji: '📚' },
+            { id: 'p104', name: '主動降噪真無線藍牙耳機 Pro', category: '數碼電子', price: 899.00, stock: 25, volume: 0.004, shopId: 'shop_02', shopName: '數碼旗艦店', emoji: '🎧' },
+            { id: 'p105', name: '純棉防風高領休閒連帽衛衣', category: '流行服飾', price: 210.00, stock: 80, volume: 0.006, shopId: 'shop_01', shopName: '霸道總裁之店', emoji: '🧥' },
+            { id: 'p106', name: '智能健康監測心率手環', category: '數碼電子', price: 299.00, stock: 50, volume: 0.002, shopId: 'shop_02', shopName: '數碼旗艦店', emoji: '⌚' }
+        ];
+
+        // 4. Pickup Points & Addresses
+        const statePickupPoints = [
+            "旺角亞皆老街分店自提點 (MK-01)",
+            "銅鑼灣軒尼詩道自提點 (CWB-02)",
+            "觀塘開源道集運站 (KT-03)",
+            "沙田新城市廣場智能櫃 (ST-04)",
+            "荃灣千色匯順豐智能櫃 (TW-05)"
+        ];
+
+        const stateAddresses = [
+            "香港九龍尖沙咀彌敦道100號 The ONE 12樓",
+            "香港島中環金融街8號 國際金融中心二期 35樓",
+            "新界沙田第一城15座22樓B室"
+        ];
+
+        // 5. Orders Database
+        let stateOrders = [
+            {
+                id: 'NX2026090101',
+                buyerId: 'u00001',
+                buyerName: '吳卓曦',
+                items: [{ productId: 'p101', name: '輕薄藍牙無線機械鍵盤', price: 349.00, qty: 1, emoji: '⌨️', shopId: 'shop_01' }],
+                totalAmount: 349.00,
+                discountedAmount: 314.10, // 10% Gold off
+                deliveryMode: 'pickup',
+                destination: '旺角亞皆老街分店自提點 (MK-01)',
+                hubId: 'pt_hub_01',
+                status: '到達自提點/派送中',
+                timestamp: '2026-09-18 14:30',
+                history: [
+                    { time: '2026-09-18 14:30', status: '已下單成功，等待賣家發貨' },
+                    { time: '2026-09-18 18:00', status: '賣家已發貨，包裹到達 深圳寶安總倉' },
+                    { time: '2026-09-19 10:15', status: '包裹已發往香港，抵達 旺角亞皆老街分店自提點 (MK-01)' }
+                ]
+            },
+            {
+                id: 'NX2026090102',
+                buyerId: 'u00002',
+                buyerName: '陳大文',
+                items: [{ productId: 'p104', name: '主動降噪真無線藍牙耳機 Pro', price: 899.00, qty: 1, emoji: '🎧', shopId: 'shop_02' }],
+                totalAmount: 899.00,
+                discountedAmount: 854.05, // 5% Silver off
+                deliveryMode: 'address',
+                destination: '香港九龍尖沙咀彌敦道100號 The ONE 12樓',
+                hubId: 'pt_hub_01',
+                status: '已入倉轉運',
+                timestamp: '2026-09-19 09:20',
+                history: [
+                    { time: '2026-09-19 09:20', status: '已下單成功，等待賣家發貨' },
+                    { time: '2026-09-19 11:45', status: '包裹入庫 深圳寶安總倉 進行自動揀貨分類' }
+                ]
+            }
+        ];
+
+        // 6. Shopping Cart State
+        let stateCart = [];
+        let activeSelectingProduct = null;
+        let activeCartDeliveryMode = 'pickup';
+        let activeCartQty = 1;
+
+        // 7. Money Flow Logs
+        let stateMoneyFlow = [
+            { id: 'TX90801', orderId: 'NX2026090101', buyerName: '吳卓曦', channel: '微信支付 (WeChat Pay)', total: 314.10, commission: 15.71, time: '2026-09-18 14:30' },
+            { id: 'TX90802', orderId: 'NX2026090102', buyerName: '陳大文', channel: 'FPS 轉數快', total: 854.05, commission: 42.70, time: '2026-09-19 09:20' }
+        ];
+
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'warning' ? 'bg-amber-600' : type === 'error' ? 'bg-red-600' : 'bg-slate-900';
+            toast.className = `${bgClass} text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 pointer-events-auto animated-fade-in border border-white/20`;
+            toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️'}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Login System Functions
+        function openLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function selectLoginRoleTab(role) {
+            currentActiveRoleTabInLogin = role;
+            const tabs = ['buyer', 'shop', 'deliverer', 'admin'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`login-tab-${t}`);
+                if (t === role) {
+                    btn.className = "py-2.5 rounded-xl bg-white text-brand-600 shadow-sm transition font-bold";
+                } else {
+                    btn.className = "py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition";
+                }
+            });
+            renderLoginPresets();
+        }
+
+        function renderLoginPresets() {
+            const container = document.getElementById('login-presets-container');
+            let html = '';
+
+            if (currentActiveRoleTabInLogin === 'buyer') {
+                html = `
+                    <div class="text-[11px] font-bold text-slate-400 mb-1">一鍵測試買家帳號 (Select Buyer Account):</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <button type="button" onclick="quickLoginAs('u00001')" class="p-2 text-left bg-white hover:bg-brand-50 rounded-xl border border-slate-200 transition">
+                            <div class="font-bold text-xs text-slate-900">吳卓曦</div>
+                            <div class="text-[10px] text-amber-600 font-bold">🥇 金卡 (9折)</div>
+                        </button>
+                        <button type="button" onclick="quickLoginAs('u00002')" class="p-2 text-left bg-white hover:bg-brand-50 rounded-xl border border-slate-200 transition">
+                            <div class="font-bold text-xs text-slate-900">陳大文</div>
+                            <div class="text-[10px] text-slate-500 font-bold">🥈 銀卡 (95折)</div>
+                        </button>
+                        <button type="button" onclick="quickLoginAs('u00003')" class="p-2 text-left bg-white hover:bg-brand-50 rounded-xl border border-slate-200 transition">
+                            <div class="font-bold text-xs text-slate-900">李嘉欣</div>
+                            <div class="text-[10px] text-slate-400">👤 普通會員</div>
+                        </button>
+                    </div>
+                `;
+            } else if (currentActiveRoleTabInLogin === 'shop') {
+                html = `
+                    <div class="text-[11px] font-bold text-slate-400 mb-1">一鍵測試賣家店鋪 (Select Shop Account):</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button type="button" onclick="quickLoginAs('s00001')" class="p-2 text-left bg-white hover:bg-indigo-50 rounded-xl border border-slate-200 transition">
+                            <div class="font-bold text-xs text-slate-900">霸道總裁之店</div>
+                            <div class="text-[10px] text-indigo-600 font-medium">賣家 ID: s00001 (張總)</div>
+                        </button>
+                        <button type="button" onclick="quickLoginAs('s00002')" class="p-2 text-left bg-white hover:bg-indigo-50 rounded-xl border border-slate-200 transition">
+                            <div class="font-bold text-xs text-slate-900">數碼旗艦店</div>
+                            <div class="text-[10px] text-indigo-600 font-medium">賣家 ID: s00002 (王經理)</div>
+                        </button>
+                    </div>
+                `;
+            } else if (currentActiveRoleTabInLogin === 'deliverer') {
+                html = `
+                    <div class="text-[11px] font-bold text-slate-400 mb-1">一鍵測試派送員身分 (Select Deliverer):</div>
+                    <button type="button" onclick="quickLoginAs('d00001')" class="w-full p-2.5 text-left bg-white hover:bg-blue-50 rounded-xl border border-slate-200 transition flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-xs text-slate-900">🚚 張派送 (高級速遞員)</div>
+                            <div class="text-[10px] text-slate-500">當前分派: 深圳寶安總倉 (a00021)</div>
+                        </div>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">登入派送工作台</span>
+                    </button>
+                `;
+            } else if (currentActiveRoleTabInLogin === 'admin') {
+                html = `
+                    <div class="text-[11px] font-bold text-slate-400 mb-1">一鍵測試最高管理員 (System Admin):</div>
+                    <button type="button" onclick="quickLoginAs('admin')" class="w-full p-2.5 text-left bg-white hover:bg-amber-50 rounded-xl border border-slate-200 transition flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-xs text-amber-700">🛡️ 系統最高管理員 (Master Admin)</div>
+                            <div class="text-[10px] text-slate-500">擁有最高全局檢視與資金流控制權限</div>
+                        </div>
+                        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">進入管理控制台</span>
+                    </button>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function quickLoginAs(userId) {
+            if (stateUsers[userId]) {
+                currentUser = stateUsers[userId];
+                closeLoginModal();
+                updateUserSessionUI();
+                showToast(`已成功登入為: ${currentUser.name}`, 'success');
+            }
+        }
+
+        function quickSwitchUser(userId) {
+            quickLoginAs(userId);
+        }
+
+        function handleManualLogin(e) {
+            e.preventDefault();
+            const uname = document.getElementById('login-input-username').value.trim();
+            if (stateUsers[uname]) {
+                quickLoginAs(uname);
+            } else {
+                showToast('未找到該用戶 ID，已預設創建臨時買家身分登入！', 'warning');
+                stateUsers[uname] = { id: uname, name: uname, role: 'buyer', tier: 'normal', email: `${uname}@nexus.com`, phone: '+852 9000 0000' };
+                quickLoginAs(uname);
+            }
+        }
+
+
+        function updateUserSessionUI() {
+            // Update Header user badge
+            document.getElementById('user-avatar-tag').innerText = currentUser.name.charAt(0);
+            document.getElementById('user-display-name').innerText = currentUser.name;
+            document.getElementById('menu-user-fullname').innerText = currentUser.name;
+
+            let tierText = '';
+            if (currentUser.role === 'buyer') {
+                tierText = currentUser.tier === 'gold' ? '🥇 金卡會員 (9折)' : currentUser.tier === 'silver' ? '🥈 銀卡會員 (95折)' : '👤 普通會員 (原價)';
+            } else if (currentUser.role === 'shop') {
+                tierText = `🏪 ${currentUser.shopTitle || '賣家店鋪'}`;
+            } else if (currentUser.role === 'deliverer') {
+                tierText = '🚚 跨境派送員';
+            } else if (currentUser.role === 'admin') {
+                tierText = '🛡️ 最高管理員';
+            }
+
+            document.getElementById('user-tier-tag').innerText = tierText;
+            document.getElementById('menu-user-role-desc').innerText = tierText;
+
+            // Render Role-Based Navigation
+            renderNavigationForRole();
+
+            // Auto Switch to the default view for the role
+            if (currentUser.role === 'buyer') switchView('store');
+            else if (currentUser.role === 'shop') switchView('shop-analytics');
+            else if (currentUser.role === 'deliverer') switchView('deliverer');
+            else if (currentUser.role === 'admin') switchView('admin');
+        }
+
+        function renderNavigationForRole() {
+            const mainNav = document.getElementById('main-nav');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            let navItems = [];
+
+            if (currentUser.role === 'buyer') {
+                navItems = [
+                    { id: 'store', label: '🛍️ 商城購物' },
+                    { id: 'orders', label: '📦 我的訂單與追蹤' }
+                ];
+            } else if (currentUser.role === 'shop') {
+                navItems = [
+                    { id: 'store', label: '🛍️ 商城預覽' },
+                    { id: 'shop-analytics', label: '📊 店鋪數據與商品管理' }
+                ];
+            } else if (currentUser.role === 'deliverer') {
+                navItems = [
+                    { id: 'store', label: '🛍️ 商城預覽' },
+                    { id: 'deliverer', label: '🚚 派送員工作台' }
+                ];
+            } else if (currentUser.role === 'admin') {
+                // Admin gets full visibility across all views
+                navItems = [
+                    { id: 'store', label: '🛍️ 商城' },
+                    { id: 'orders', label: '📦 訂單追蹤' },
+                    { id: 'shop-analytics', label: '📊 店鋪數據' },
+                    { id: 'deliverer', label: '🚚 派送員' },
+                    { id: 'admin', label: '🛡️ 系統最高管理員' }
+                ];
+            }
+
+            // Desktop Nav
+            let desktopHtml = '';
+            navItems.forEach(item => {
+                desktopHtml += `
+                    <button onclick="switchView('${item.id}')" id="nav-${item.id}" class="px-3.5 py-1.5 rounded-lg transition-all hover:text-slate-900">
+                        ${item.label}
+                    </button>
+                `;
+            });
+            mainNav.innerHTML = desktopHtml;
+
+            // Mobile Nav
+            let mobileHtml = '';
+            navItems.forEach(item => {
+                mobileHtml += `
+                    <button onclick="switchView('${item.id}')" id="mnav-${item.id}" class="px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 font-medium">
+                        ${item.label}
+                    </button>
+                `;
+            });
+            mobileNav.innerHTML = mobileHtml;
+        }
+
+        function switchView(viewId) {
+            const views = ['store', 'orders', 'shop-analytics', 'deliverer', 'admin'];
+            views.forEach(v => {
+                const sec = document.getElementById(`view-${v}`);
+                if (sec) {
+                    if (v === viewId) sec.classList.remove('hidden');
+                    else sec.classList.add('hidden');
+                }
+
+                // Desktop Nav Active State
+                const navBtn = document.getElementById(`nav-${v}`);
+                if (navBtn) {
+                    if (v === viewId) {
+                        navBtn.className = "px-3.5 py-1.5 rounded-lg transition-all bg-white text-brand-600 shadow-sm font-bold";
+                    } else {
+                        navBtn.className = "px-3.5 py-1.5 rounded-lg transition-all hover:text-slate-900 text-slate-600 font-medium";
+                    }
+                }
+
+                // Mobile Nav Active State
+                const mnavBtn = document.getElementById(`mnav-${v}`);
+                if (mnavBtn) {
+                    if (v === viewId) {
+                        mnavBtn.className = "px-3 py-1.5 rounded-lg whitespace-nowrap bg-brand-50 text-brand-600 font-bold";
+                    } else {
+                        mnavBtn.className = "px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 font-medium";
+                    }
+                }
+            });
+
+            // Trigger view specific re-renders
+            if (viewId === 'store') renderStoreGrid();
+            if (viewId === 'orders') renderOrdersList();
+            if (viewId === 'shop-analytics') renderShopAnalytics();
+            if (viewId === 'deliverer') renderDelivererWorkbench();
+            if (viewId === 'admin') renderAdminCenter();
+        }
+
+
+        let currentCatFilter = 'all';
+
+        function filterProducts(cat) {
+            currentCatFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.innerText.includes(cat) || (cat === 'all' && btn.innerText.includes('全部'))) {
+                    btn.className = "cat-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-sm transition";
+                } else {
+                    btn.className = "cat-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition";
+                }
+            });
+            renderStoreGrid();
+        }
+
+        function searchProducts() {
+            renderStoreGrid();
+        }
+
+        function renderStoreGrid() {
+            const grid = document.getElementById('product-grid');
+            const keyword = document.getElementById('store-search').value.toLowerCase().trim();
+
+            const filtered = stateProducts.filter(p => {
+                const matchCat = currentCatFilter === 'all' || p.category === currentCatFilter;
+                const matchKw = p.name.toLowerCase().includes(keyword) || p.shopName.toLowerCase().includes(keyword);
+                return matchCat && matchKw;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-xs font-medium">未搜尋到相關商品</div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(p => {
+                // Calculate discounted display price for buyer tier
+                let discountPercent = 1;
+                if (currentUser.role === 'buyer') {
+                    if (currentUser.tier === 'gold') discountPercent = 0.9;
+                    if (currentUser.tier === 'silver') discountPercent = 0.95;
+                }
+                const buyerPrice = (p.price * discountPercent).toFixed(2);
+
+                html += `
+                    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between group p-4 space-y-3">
+                        <div class="space-y-3">
+                            <div class="w-full h-36 rounded-2xl bg-slate-100 flex items-center justify-center text-5xl group-hover:scale-105 transition duration-200 select-none">
+                                ${p.emoji}
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-brand-600 font-semibold bg-brand-50 px-2 py-0.5 rounded-md">${p.category}</span>
+                                    <span class="text-slate-400 font-medium">${p.shopName}</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-sm line-clamp-2">${p.name}</h3>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs font-black text-brand-600">HK$ ${buyerPrice}</div>
+                                ${discountPercent < 1 ? `<div class="text-[10px] text-slate-400 line-through">HK$ ${p.price.toFixed(2)}</div>` : ''}
+                            </div>
+                            <button onclick="openCartSelectModal('${p.id}')" class="px-3 py-1.5 bg-slate-900 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                                🛒 購買 / 選購
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        // Cart Selection Modal
+        function openCartSelectModal(productId) {
+            activeSelectingProduct = stateProducts.find(p => p.id === productId);
+            if (!activeSelectingProduct) return;
+
+            document.getElementById('cart-modal-emoji').innerText = activeSelectingProduct.emoji;
+            document.getElementById('cart-modal-title').innerText = activeSelectingProduct.name;
+            document.getElementById('cart-modal-price').innerText = `HK$ ${activeSelectingProduct.price.toFixed(2)} (原價)`;
+
+            activeCartQty = 1;
+            document.getElementById('cart-modal-qty').innerText = activeCartQty;
+
+            // Render Pickup points dropdown
+            const pickupSelect = document.getElementById('cart-select-pickup');
+            pickupSelect.innerHTML = statePickupPoints.map(pt => `<option value="${pt}">${pt}</option>`).join('');
+
+            // Render Doorstep Addresses dropdown
+            const addressSelect = document.getElementById('cart-select-address');
+            addressSelect.innerHTML = stateAddresses.map(ad => `<option value="${ad}">${ad}</option>`).join('');
+
+            setCartDeliveryMode('pickup');
+            document.getElementById('modal-cart-select').classList.remove('hidden');
+        }
+
+        function setCartDeliveryMode(mode) {
+            activeCartDeliveryMode = mode;
+            const btnPickup = document.getElementById('btn-mode-pickup');
+            const btnAddr = document.getElementById('btn-mode-address');
+            const boxPickup = document.getElementById('container-pickup-select');
+            const boxAddr = document.getElementById('container-address-select');
+
+            if (mode === 'pickup') {
+                btnPickup.className = "py-2 rounded-lg bg-white shadow-sm text-brand-600 font-bold transition";
+                btnAddr.className = "py-2 rounded-lg text-slate-600 transition";
+                boxPickup.classList.remove('hidden');
+                boxAddr.classList.add('hidden');
+            } else {
+                btnAddr.className = "py-2 rounded-lg bg-white shadow-sm text-brand-600 font-bold transition";
+                btnPickup.className = "py-2 rounded-lg text-slate-600 transition";
+                boxAddr.classList.remove('hidden');
+                boxPickup.classList.add('hidden');
+            }
+        }
+
+        function adjustCartQty(delta) {
+            activeCartQty = Math.max(1, activeCartQty + delta);
+            document.getElementById('cart-modal-qty').innerText = activeCartQty;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function confirmAddToCart(isDirectCheckout = false) {
+            if (!activeSelectingProduct) return;
+
+            const dest = activeCartDeliveryMode === 'pickup' 
+                ? document.getElementById('cart-select-pickup').value 
+                : document.getElementById('cart-select-address').value;
+
+            const existingIndex = stateCart.findIndex(item => item.product.id === activeSelectingProduct.id && item.destination === dest);
+            if (existingIndex > -1) {
+                stateCart[existingIndex].qty += activeCartQty;
+            } else {
+                stateCart.push({
+                    product: activeSelectingProduct,
+                    qty: activeCartQty,
+                    deliveryMode: activeCartDeliveryMode,
+                    destination: dest
+                });
+            }
+
+            closeModal('modal-cart-select');
+            updateCartBadge();
+            showToast(`已成功加入購物車！`, 'success');
+
+            if (isDirectCheckout) {
+                toggleCartDrawer();
+            }
+        }
+
+        function updateCartBadge() {
+            const count = stateCart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-badge-count').innerText = count;
+        }
+
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('modal-cart-drawer');
+            if (drawer.classList.contains('hidden')) {
+                renderCartDrawerItems();
+                drawer.classList.remove('hidden');
+            } else {
+                drawer.classList.add('hidden');
+            }
+        }
+
+        function renderCartDrawerItems() {
+            const container = document.getElementById('cart-drawer-items');
+            if (stateCart.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs font-medium">購物車空空如也 🛒</div>`;
+                updateCartTotals();
+                return;
+            }
+
+            let html = '';
+            stateCart.forEach((item, index) => {
+                const sub = (item.product.price * item.qty).toFixed(2);
+                html += `
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">${item.product.emoji}</span>
+                            <div>
+                                <div class="font-bold text-slate-900 line-clamp-1">${item.product.name}</div>
+                                <div class="text-[10px] text-slate-400 line-clamp-1">📍 ${item.destination}</div>
+                                <div class="text-brand-600 font-bold mt-0.5">HK$ ${item.product.price.toFixed(2)} x ${item.qty}</div>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <div class="font-extrabold text-slate-900">HK$ ${sub}</div>
+                            <button onclick="removeFromCart(${index})" class="text-[10px] text-red-500 hover:text-red-700 font-bold">刪除</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            updateCartTotals();
+        }
+
+        function removeFromCart(index) {
+            stateCart.splice(index, 1);
+            renderCartDrawerItems();
+            updateCartBadge();
+        }
+
+        function updateCartTotals() {
+            const subtotal = stateCart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
+            
+            // Calculate tier discount
+            let discountRate = 0;
+            let discountLabel = '會員無折扣:';
+            if (currentUser.role === 'buyer') {
+                if (currentUser.tier === 'gold') { discountRate = 0.10; discountLabel = '🥇 金卡會員 (10% Off):'; }
+                if (currentUser.tier === 'silver') { discountRate = 0.05; discountLabel = '🥈 銀卡會員 (5% Off):'; }
+            }
+
+            const discountAmount = subtotal * discountRate;
+            const shipping = stateCart.length > 0 ? 15.00 : 0.00; // Fixed flat freight
+            const finalTotal = subtotal - discountAmount + shipping;
+
+            document.getElementById('cart-summary-subtotal').innerText = `HK$ ${subtotal.toFixed(2)}`;
+            document.getElementById('cart-summary-discount-label').innerText = discountLabel;
+            document.getElementById('cart-summary-discount-amount').innerText = `-HK$ ${discountAmount.toFixed(2)}`;
+            document.getElementById('cart-summary-shipping').innerText = `HK$ ${shipping.toFixed(2)}`;
+            document.getElementById('cart-summary-final').innerText = `HK$ ${finalTotal.toFixed(2)}`;
+        }
+
+
+        function executeCartCheckout() {
+            if (stateCart.length === 0) {
+                showToast('購物車內暫無商品！', 'warning');
+                return;
+            }
+
+            const subtotal = stateCart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
+            let discountRate = 0;
+            if (currentUser.role === 'buyer') {
+                if (currentUser.tier === 'gold') discountRate = 0.10;
+                if (currentUser.tier === 'silver') discountRate = 0.05;
+            }
+            const discountAmount = subtotal * discountRate;
+            const finalTotal = subtotal - discountAmount + 15.00;
+
+            const orderId = `NX${Date.now().toString().slice(-8)}`;
+            const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 16);
+
+            // Deduct product stock & Update shop stats
+            stateCart.forEach(item => {
+                const prod = stateProducts.find(p => p.id === item.product.id);
+                if (prod) {
+                    prod.stock = Math.max(0, prod.stock - item.qty);
+                }
+            });
+
+            const newOrder = {
+                id: orderId,
+                buyerId: currentUser.id,
+                buyerName: currentUser.name,
+                items: stateCart.map(item => ({
+                    productId: item.product.id,
+                    name: item.product.name,
+                    price: item.product.price,
+                    qty: item.qty,
+                    emoji: item.product.emoji,
+                    shopId: item.product.shopId
+                })),
+                totalAmount: subtotal,
+                discountedAmount: finalTotal,
+                deliveryMode: stateCart[0].deliveryMode,
+                destination: stateCart[0].destination,
+                hubId: 'pt_hub_01', // Assigned to Shenzhen Baoan hub
+                status: '已下單',
+                timestamp: timestamp,
+                history: [
+                    { time: timestamp, status: '已下單成功，等待賣家發貨' }
+                ]
+            };
+
+            stateOrders.unshift(newOrder);
+
+            // Add to Money Flow
+            stateMoneyFlow.unshift({
+                id: `TX${Math.floor(10000 + Math.random() * 90000)}`,
+                orderId: orderId,
+                buyerName: currentUser.name,
+                channel: '信用卡/智能跨境支付',
+                total: finalTotal,
+                commission: finalTotal * 0.05,
+                time: timestamp
+            });
+
+            // Update hub load
+            if (stateHubs['pt_hub_01']) {
+                stateHubs['pt_hub_01'].currentCount += 1;
+            }
+
+            // Clear Cart
+            stateCart = [];
+            updateCartBadge();
+            toggleCartDrawer();
+
+            showToast(`🎉 結算成功！訂單號: ${orderId}`, 'success');
+
+            // Redirect to Orders View
+            switchView('orders');
+        }
+
+
+        function renderOrdersList() {
+            const container = document.getElementById('orders-list-container');
+            
+            // Filter orders for active user unless Admin
+            const userOrders = currentUser.role === 'admin' 
+                ? stateOrders 
+                : stateOrders.filter(o => o.buyerId === currentUser.id);
+
+            document.getElementById('my-orders-count-badge').innerText = `共 ${userOrders.length} 筆訂單`;
+
+            if (userOrders.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 bg-white rounded-2xl border border-slate-200/80 text-slate-400 text-xs font-medium">尚無相關訂單紀錄</div>`;
+                return;
+            }
+
+            let html = '';
+            userOrders.forEach(o => {
+                const statusColor = o.status === '已簽收/完成' ? 'text-emerald-600 bg-emerald-50 border-emerald-200' 
+                                  : o.status === '到達自提點/派送中' ? 'text-brand-600 bg-brand-50 border-brand-200'
+                                  : 'text-amber-600 bg-amber-50 border-amber-200';
+
+                html += `
+                    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-sm">訂單號: ${o.id}</span>
+                                <span class="text-[11px] text-slate-400">(${o.timestamp})</span>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1 rounded-full border ${statusColor} self-start sm:self-auto">${o.status}</span>
+                        </div>
+
+                        <!-- Items List -->
+                        <div class="space-y-2">
+                            ${o.items.map(i => `
+                                <div class="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">${i.emoji}</span>
+                                        <span class="font-bold text-slate-800">${i.name}</span>
+                                    </div>
+                                    <span class="font-semibold text-slate-600">HK$ ${i.price.toFixed(2)} x ${i.qty}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <!-- Shipping Info -->
+                        <div class="text-xs text-slate-600 bg-brand-50/50 p-3 rounded-2xl border border-brand-100/60 flex flex-col sm:flex-row justify-between gap-2">
+                            <div>
+                                <span class="font-bold text-slate-900">配送目的地:</span> ${o.destination}
+                            </div>
+                            <div class="font-bold text-brand-600">
+                                實付總額: HK$ ${o.discountedAmount.toFixed(2)}
+                            </div>
+                        </div>
+
+                        <!-- Logistics Progress Timeline -->
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">📍 全流程跨境物流軌跡 Tracking:</div>
+                            <div class="space-y-1.5 pl-2 border-l-2 border-brand-500">
+                                ${o.history.map(h => `
+                                    <div class="text-xs flex items-center gap-2">
+                                        <span class="text-[10px] text-slate-400 font-mono">${h.time}</span>
+                                        <span class="font-semibold text-slate-700">${h.status}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+
+        function renderShopAnalytics() {
+            // Find products belonging to logged in seller or shop_01 by default
+            const activeShopId = currentUser.role === 'shop' ? (currentUser.shopId || 'shop_01') : 'shop_01';
+            const shopProds = stateProducts.filter(p => p.shopId === activeShopId);
+
+            document.getElementById('active-shop-title').innerText = currentUser.shopTitle || '霸道總裁之店';
+
+            // Calculate revenue from orders containing shop products
+            let shopRevenue = 0;
+            let shopOrderCount = 0;
+
+            stateOrders.forEach(o => {
+                let hasItem = false;
+                o.items.forEach(i => {
+                    if (i.shopId === activeShopId) {
+                        shopRevenue += i.price * i.qty;
+                        hasItem = true;
+                    }
+                });
+                if (hasItem) shopOrderCount++;
+            });
+
+            document.getElementById('shop-stat-revenue').innerText = `HK$ ${shopRevenue.toFixed(2)}`;
+            document.getElementById('shop-stat-orders').innerText = `${shopOrderCount} 筆`;
+            document.getElementById('shop-stat-items').innerText = `${shopProds.length} 款`;
+
+            // Inventory Table
+            const tbody = document.getElementById('shop-products-tbody');
+            let html = '';
+
+            shopProds.forEach(p => {
+                html += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5 pl-5 font-bold text-slate-900 flex items-center gap-2">
+                            <span class="text-xl">${p.emoji}</span>
+                            <span>${p.name}</span>
+                        </td>
+                        <td class="p-3.5 font-bold text-brand-600">HK$ ${p.price.toFixed(2)}</td>
+                        <td class="p-3.5 font-bold">
+                            <span class="${p.stock < 10 ? 'text-red-500 font-extrabold' : 'text-slate-800'}">${p.stock} 件</span>
+                        </td>
+                        <td class="p-3.5 text-slate-500 font-mono">${p.volume} m³</td>
+                        <td class="p-3.5 text-right pr-5">
+                            <button onclick="quickUpdateStock('${p.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-bold transition">
+                                ✏️ 快速補貨
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function quickUpdateStock(productId) {
+            const prod = stateProducts.find(p => p.id === productId);
+            if (!prod) return;
+
+            const addQty = prompt(`【補貨管理】請輸入商品「${prod.name}」增加之庫存數量:`, "20");
+            if (addQty !== null) {
+                const parsed = parseInt(addQty);
+                if (!isNaN(parsed) && parsed >= 0) {
+                    prod.stock += parsed;
+                    renderShopAnalytics();
+                    showToast(`庫存更新成功！當前庫存: ${prod.stock}`, 'success');
+                }
+            }
+        }
+
+        function openAddProductModal() {
+            document.getElementById('modal-add-product').classList.remove('hidden');
+        }
+
+        function handleCreateProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-prod-name').value.trim();
+            const category = document.getElementById('new-prod-category').value;
+            const emoji = document.getElementById('new-prod-emoji').value;
+            const price = parseFloat(document.getElementById('new-prod-price').value);
+            const stock = parseInt(document.getElementById('new-prod-stock').value);
+            const volume = parseFloat(document.getElementById('new-prod-volume').value);
+
+            const activeShopId = currentUser.role === 'shop' ? (currentUser.shopId || 'shop_01') : 'shop_01';
+            const activeShopName = currentUser.shopTitle || '霸道總裁之店';
+
+            const newProd = {
+                id: `p${Date.now().toString().slice(-4)}`,
+                name: name,
+                category: category,
+                price: Math.max(0.01, price),
+                stock: Math.max(0, stock),
+                volume: Math.max(0.001, volume),
+                shopId: activeShopId,
+                shopName: activeShopName,
+                emoji: emoji
+            };
+
+            stateProducts.unshift(newProd);
+            closeModal('modal-add-product');
+            renderShopAnalytics();
+            showToast(`新商品「${name}」已成功發佈至商城！`, 'success');
+        }
+
+
+        let currentDelivererHub = 'pt_hub_01';
+
+        function switchDelivererHub(hubId) {
+            currentDelivererHub = hubId;
+            renderDelivererWorkbench();
+        }
+
+        function renderDelivererWorkbench() {
+            const hub = stateHubs[currentDelivererHub];
+            document.getElementById('deliverer-kpi-hub-name').innerText = hub.name;
+
+            // Tasks filtered by hub
+            const pendingTasks = stateOrders.filter(o => o.status !== '已簽收/完成');
+            const completedTasks = stateOrders.filter(o => o.status === '已簽收/完成');
+
+            document.getElementById('deliverer-kpi-pending').innerText = pendingTasks.length;
+            document.getElementById('deliverer-kpi-completed').innerText = completedTasks.length;
+
+            const loadPct = ((hub.currentCount / hub.capacity) * 100).toFixed(1);
+            document.getElementById('deliverer-kpi-hub-load').innerText = `${loadPct}%`;
+
+            // Table of Tasks
+            const tbody = document.getElementById('deliverer-tasks-tbody');
+            if (stateOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">當前樞紐無調配任務</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            stateOrders.forEach(o => {
+                const isFinished = o.status === '已簽收/完成';
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5 pl-5 font-bold text-slate-900 font-mono">${o.id}</td>
+                        <td class="p-3.5 font-semibold text-slate-800">${o.items[0]?.name || '跨境包裹'}</td>
+                        <td class="p-3.5 text-slate-600">${hub.name} ➔ <span class="font-bold text-slate-900">${o.destination}</span></td>
+                        <td class="p-3.5 text-slate-400 font-mono">${o.timestamp}</td>
+                        <td class="p-3.5">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isFinished ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                ${o.status}
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-right pr-5">
+                            <div class="flex items-center justify-end gap-1">
+                                ${o.status === '已下單' ? `
+                                    <button onclick="updateOrderStatus('${o.id}', '已入倉轉運')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition">
+                                        📦 簽收入倉
+                                    </button>
+                                ` : o.status === '已入倉轉運' ? `
+                                    <button onclick="updateOrderStatus('${o.id}', '到達自提點/派送中')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">
+                                        🚚 開始派送
+                                    </button>
+                                ` : o.status === '到達自提點/派送中' ? `
+                                    <button onclick="updateOrderStatus('${o.id}', '已簽收/完成')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition">
+                                        ✅ 完成簽收
+                                    </button>
+                                ` : `
+                                    <span class="text-slate-400 font-semibold">已完成結案</span>
+                                `}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const order = stateOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            order.status = newStatus;
+            const nowTime = new Date().toISOString().replace('T', ' ').slice(0, 16);
+            order.history.push({ time: nowTime, status: `包裹進度更新: ${newStatus}` });
+
+            renderDelivererWorkbench();
+            showToast(`訂單 ${orderId} 狀態已更新為: ${newStatus}`, 'success');
+        }
+
+
+        function renderAdminCenter() {
+            // GMV Calculation
+            const gmv = stateMoneyFlow.reduce((sum, item) => sum + item.total, 0);
+            document.getElementById('admin-total-gmv').innerText = `HK$ ${gmv.toFixed(2)}`;
+
+            // Render Member Tier Management Table
+            const userTbody = document.getElementById('admin-user-tier-tbody');
+            const buyerUsers = Object.values(stateUsers).filter(u => u.role === 'buyer');
+
+            let userHtml = '';
+            buyerUsers.forEach(u => {
+                userHtml += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-bold text-slate-900">${u.name} <span class="text-[10px] text-slate-400">(${u.id})</span></td>
+                        <td class="p-3 text-slate-500">${u.email} / ${u.phone}</td>
+                        <td class="p-3 font-bold">
+                            <span class="${u.tier === 'gold' ? 'text-amber-500' : u.tier === 'silver' ? 'text-slate-500' : 'text-slate-400'}">
+                                ${u.tier === 'gold' ? '🥇 金卡 (9折)' : u.tier === 'silver' ? '🥈 銀卡 (95折)' : '👤 普通'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right">
+                            <select onchange="changeUserTier('${u.id}', this.value)" class="text-xs bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 font-bold focus:outline-none">
+                                <option value="gold" ${u.tier === 'gold' ? 'selected' : ''}>🥇 晉升金卡 (9折)</option>
+                                <option value="silver" ${u.tier === 'silver' ? 'selected' : ''}>🥈 調整銀卡 (95折)</option>
+                                <option value="normal" ${u.tier === 'normal' ? 'selected' : ''}>👤 普通會員 (原價)</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            });
+            userTbody.innerHTML = userHtml;
+
+            // Render Money Flow Table
+            const moneyTbody = document.getElementById('admin-moneyflow-tbody');
+            let moneyHtml = '';
+
+            stateMoneyFlow.forEach(m => {
+                moneyHtml += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-bold text-slate-900 font-mono">${m.id}</td>
+                        <td class="p-3 font-semibold text-slate-800">${m.buyerName}</td>
+                        <td class="p-3 text-slate-500">${m.channel}</td>
+                        <td class="p-3 font-bold text-slate-900">HK$ ${m.total.toFixed(2)}</td>
+                        <td class="p-3 font-bold text-emerald-600">+HK$ ${m.commission.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            moneyTbody.innerHTML = moneyHtml;
+
+            // Render Hub Discharge Bars
+            const dischargeBox = document.getElementById('admin-hub-discharge-list');
+            let dischargeHtml = '';
+
+            Object.values(stateHubs).forEach(hub => {
+                const loadPct = Math.min(100, ((hub.currentCount / hub.capacity) * 100)).toFixed(1);
+                dischargeHtml += `
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-900">${hub.name} (${hub.code})</span>
+                            <span class="font-bold ${loadPct > 80 ? 'text-red-500' : 'text-slate-600'}">${hub.currentCount} / ${hub.capacity} (${loadPct}%)</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div class="h-full ${loadPct > 80 ? 'bg-red-500' : 'bg-brand-600'} transition-all duration-300" style="width: ${loadPct}%"></div>
+                        </div>
+                        <div class="flex justify-end pt-1">
+                            <button onclick="executeHubDischarge('${hub.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition">
+                                🚨 強制 Discharge 排空
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            dischargeBox.innerHTML = dischargeHtml;
+        }
+
+        function changeUserTier(userId, newTier) {
+            if (stateUsers[userId]) {
+                stateUsers[userId].tier = newTier;
+                showToast(`用戶 ${stateUsers[userId].name} 會員等級已調整為: ${newTier.toUpperCase()}`, 'success');
+                if (currentUser.id === userId) updateUserSessionUI();
+                renderAdminCenter();
+            }
+        }
+
+        function executeHubDischarge(hubId) {
+            const hub = stateHubs[hubId];
+            if (!hub) return;
+
+            hub.currentCount = Math.floor(hub.capacity * 0.15); // Clear down to 15%
+            renderAdminCenter();
+            showToast(`已成功執行【${hub.name}】積壓包裹緊急排空 (Discharge) 作業！`, 'warning');
+        }
+
+        window.onload = function() {
+            // Initial Auth Setup
+            selectLoginRoleTab('buyer');
+            updateUserSessionUI();
+        };
+    </script>
+</body>
+</html>
